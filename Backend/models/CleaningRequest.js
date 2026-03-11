@@ -14,6 +14,10 @@ const CleaningRequestSchema = new mongoose.Schema({
     status: { type: String, enum: ['Pending', 'In Progress', 'Completed'], default: 'Pending' },
     notes: { type: String },
     priceAtTimeOfRequest: { type: Number },
-}, { timestamps: true });
+});
+
+CleaningRequestSchema.index({ pgId: 1, status: 1 });
+CleaningRequestSchema.index({ pgId: 1, date: -1 });
+CleaningRequestSchema.index({ date: -1 });
 
 module.exports = mongoose.model('CleaningRequest', CleaningRequestSchema);

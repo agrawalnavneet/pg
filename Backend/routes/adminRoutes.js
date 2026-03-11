@@ -18,6 +18,7 @@ router.get('/reports', auth, checkAdmin, adminController.getReports);
 router.get('/pg/:pgId/requests', auth, checkAdmin, adminController.getRequestsByPG);
 router.put('/request/:requestId/status', auth, checkAdmin, adminController.updateRequestStatus);
 router.put('/request/:requestId/details', auth, checkAdmin, adminController.updateRequestDetails); // New Route
+router.put('/request/:requestId', auth, checkAdmin, adminController.updateFullRequest); // Full Edit Route
 
 router.post('/pg/:pgId/requests', auth, checkAdmin, adminController.createRequestForPG);
 

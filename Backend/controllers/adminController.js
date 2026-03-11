@@ -104,6 +104,35 @@ exports.updateRequestDetails = async (req, res) => {
     }
 };
 
+exports.updateFullRequest = async (req, res) => {
+    const {
+        date, cleaningTime, roomNumber, name, pgContact,
+        cleanerNameId, cleaningType, notes, priceAtTimeOfRequest, status
+    } = req.body;
+
+    try {
+        const request = await CleaningRequest.findById(req.params.requestId);
+        if (!request) return res.status(404).json({ message: 'Request not found' });
+
+        if (date) request.date = date;
+        if (cleaningTime !== undefined) request.cleaningTime = cleaningTime;
+        if (roomNumber !== undefined) request.roomNumber = roomNumber;
+        if (name !== undefined) request.name = name;
+        if (pgContact !== undefined) request.pgContact = pgContact;
+        if (cleanerNameId !== undefined) request.cleanerNameId = cleanerNameId;
+        if (cleaningType !== undefined) request.cleaningType = cleaningType;
+        if (notes !== undefined) request.notes = notes;
+        if (priceAtTimeOfRequest !== undefined) request.priceAtTimeOfRequest = priceAtTimeOfRequest;
+        if (status) request.status = status;
+
+        await request.save();
+        res.json(request);
+    } catch (err) {
+        console.error("Update Full Request Error:", err);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 exports.createRequestForPG = async (req, res) => {
     const { roomNumber, date, notes, pgContact, requesterName, name, address, cleanerNameId, cleaningTime, cleaningType } = req.body;
     try {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
-import { ArrowLeft, Calendar, Hash, FileText, CheckCircle, Clock, AlertCircle, Plus, X, User, Phone } from 'lucide-react';
+import { ArrowLeft, Calendar, Hash, FileText, CheckCircle, Edit2, AlertCircle, Plus, X, User, Phone, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 
 const AdminPGDetails = () => {
@@ -10,6 +10,8 @@ const AdminPGDetails = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [editingRequest, setEditingRequest] = useState(null);
+    const [editFormData, setEditFormData] = useState({});
     const [formData, setFormData] = useState({
         roomNumber: '',
         contact: '',
@@ -104,6 +106,40 @@ const AdminPGDetails = () => {
         }
     };
 
+    const handleEditClick = (req) => {
+        setEditingRequest(req);
+        setEditFormData({
+            date: new Date(req.date).toISOString().split('T')[0],
+            cleaningTime: req.cleaningTime || '',
+            roomNumber: req.roomNumber || '',
+            name: req.name || req.requesterName || '',
+            pgContact: req.pgContact || '',
+            cleanerNameId: req.cleanerNameId || '',
+            cleaningType: req.cleaningType || '',
+            notes: req.notes || '',
+            priceAtTimeOfRequest: req.priceAtTimeOfRequest || 0,
+            status: req.status || 'Pending'
+        });
+    };
+
+    const handleEditChange = (e) => {
+        setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await api.put(`/admin/request/${editingRequest._id}`, editFormData);
+            setRequests(requests.map(req =>
+                req._id === editingRequest._id ? res.data : req
+            ));
+            setEditingRequest(null);
+        } catch (err) {
+            console.error(err);
+            alert('Failed to update request');
+        }
+    };
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'Completed': return 'bg-green-100 text-green-700 border-green-200';
@@ -153,6 +189,7 @@ const AdminPGDetails = () => {
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Time</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">PG Name</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">PG Address</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Room No / Details</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Contact</th>
@@ -161,6 +198,7 @@ const AdminPGDetails = () => {
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Notes</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Price (₹)</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -177,6 +215,9 @@ const AdminPGDetails = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                         {req.pgName || '-'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 truncate max-w-[200px]" title={req.address || '-'}>
+                                        {req.address || '-'}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-700">
                                         <div className="flex items-center gap-2">
@@ -230,6 +271,15 @@ const AdminPGDetails = () => {
                                             <option value="Completed">Completed</option>
                                         </select>
                                     </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                        <button
+                                            onClick={() => handleEditClick(req)}
+                                            className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 p-2 rounded-full hover:bg-indigo-100 transition-colors"
+                                            title="Edit Request"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -237,7 +287,137 @@ const AdminPGDetails = () => {
                 </div>
             )}
 
-            {/* Modal */}
+            {/* Edit Modal (Copied from AdminRequests style) */}
+            {editingRequest && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-indigo-50 to-white px-8 py-6 border-b border-indigo-100 flex justify-between items-center shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
+                                    <Edit2 className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900">Edit Request</h3>
+                                    <p className="text-indigo-600 text-sm font-medium">Update details for {editingRequest.pgName || pgName}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setEditingRequest(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body / Form */}
+                        <div className="p-8 overflow-y-auto">
+                            <form id="editForm" onSubmit={handleEditSubmit} className="space-y-6">
+                                <div className="grid grid-cols-2 gap-6">
+                                    {/* Date */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">
+                                            <Calendar className="w-4 h-4 mr-2 text-indigo-500" /> Date
+                                        </label>
+                                        <input type="date" name="date" required value={editFormData.date} onChange={handleEditChange} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none" />
+                                    </div>
+                                    {/* Time */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">
+                                            <Calendar className="w-4 h-4 mr-2 text-indigo-500" /> Time
+                                        </label>
+                                        <input type="time" name="cleaningTime" value={editFormData.cleaningTime} onChange={handleEditChange} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none" />
+                                    </div>
+
+                                    {/* Room Number */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">
+                                            <Hash className="w-4 h-4 mr-2 text-indigo-500" /> Room No.
+                                        </label>
+                                        <input type="text" name="roomNumber" value={editFormData.roomNumber} onChange={handleEditChange} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none" />
+                                    </div>
+                                    {/* Name */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">
+                                            <User className="w-4 h-4 mr-2 text-indigo-500" /> Resident Name
+                                        </label>
+                                        <input type="text" name="name" value={editFormData.name} onChange={handleEditChange} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none" />
+                                    </div>
+
+                                    {/* Contact */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">
+                                            <Phone className="w-4 h-4 mr-2 text-indigo-500" /> Contact
+                                        </label>
+                                        <input type="text" name="pgContact" value={editFormData.pgContact} onChange={handleEditChange} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none" />
+                                    </div>
+                                    {/* Cleaner */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">
+                                            <User className="w-4 h-4 mr-2 text-indigo-500" /> Cleaner Name/ID
+                                        </label>
+                                        <input type="text" name="cleanerNameId" value={editFormData.cleanerNameId} onChange={handleEditChange} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none" />
+                                    </div>
+
+                                    {/* Service Type */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">
+                                            <FileText className="w-4 h-4 mr-2 text-indigo-500" /> Service Type
+                                        </label>
+                                        <input type="text" name="cleaningType" value={editFormData.cleaningType} onChange={handleEditChange} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none" />
+                                    </div>
+                                    {/* Price */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">
+                                            <DollarSign className="w-4 h-4 mr-2 text-indigo-500" /> Price
+                                        </label>
+                                        <input type="number" name="priceAtTimeOfRequest" value={editFormData.priceAtTimeOfRequest} onChange={handleEditChange} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none" />
+                                    </div>
+
+                                    {/* Status */}
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">
+                                            Status
+                                        </label>
+                                        <div className="flex gap-4">
+                                            {['Pending', 'In Progress', 'Completed'].map(statusOption => (
+                                                <label key={statusOption} className={`flex-1 flex items-center justify-center px-4 py-3 rounded-xl border-2 cursor-pointer transition-all ${editFormData.status === statusOption ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-bold' : 'border-gray-200 text-gray-600 hover:border-indigo-200'}`}>
+                                                    <input
+                                                        type="radio"
+                                                        name="status"
+                                                        value={statusOption}
+                                                        checked={editFormData.status === statusOption}
+                                                        onChange={handleEditChange}
+                                                        className="hidden"
+                                                    />
+                                                    {statusOption}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Notes */}
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">
+                                            <FileText className="w-4 h-4 mr-2 text-indigo-500" /> Notes
+                                        </label>
+                                        <textarea name="notes" value={editFormData.notes} onChange={handleEditChange} rows="3" className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none resize-none"></textarea>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-8 py-5 border-t border-gray-100 flex justify-end gap-3 shrink-0">
+                            <button onClick={() => setEditingRequest(null)} type="button" className="px-6 py-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition-colors">
+                                Cancel
+                            </button>
+                            <button form="editForm" type="submit" className="px-8 py-2.5 rounded-xl bg-indigo-600 text-white font-bold shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                                Save Updates
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Create Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all">
                     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up">

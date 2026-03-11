@@ -13,6 +13,7 @@ const PGDashboardHome = () => {
 
     // Form State
     const [formData, setFormData] = useState({
+        pgName: '',
         roomNumber: '',
         contact: '',
         name: '',
@@ -50,6 +51,7 @@ const PGDashboardHome = () => {
         e.preventDefault();
         try {
             const payload = {
+                pgName: formData.pgName,
                 roomNumber: formData.roomNumber,
                 pgContact: formData.contact,
                 name: formData.name,
@@ -67,6 +69,7 @@ const PGDashboardHome = () => {
 
             setShowModal(false);
             setFormData({
+                pgName: '',
                 roomNumber: '',
                 contact: '',
                 name: '',
@@ -159,6 +162,22 @@ const PGDashboardHome = () => {
                         {/* Form */}
                         <form onSubmit={handleSubmit} className="p-8 space-y-5">
                             <div className="grid grid-cols-2 gap-5">
+                                {/* PG Name */}
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">
+                                        <FileText className="w-4 h-4 mr-2 text-green-500" />
+                                        PG Name
+                                    </label>
+                                    <input
+                                        name="pgName"
+                                        type="text"
+                                        required
+                                        value={formData.pgName}
+                                        onChange={handleChange}
+                                        placeholder="e.g. My PG Name"
+                                        className="w-full px-5 py-3 rounded-xl border border-gray-200 text-gray-800 placeholder-gray-400 focus:border-green-500 focus:ring-4 focus:ring-green-50 outline-none transition-all"
+                                    />
+                                </div>
                                 {/* Room Number */}
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center">

@@ -11,7 +11,7 @@ exports.createRequest = async (req, res) => {
         const newRequest = new CleaningRequest({
             pgId: req.user.id,
             roomNumber: roomNumber || 'N/A', // Default if missing
-            pgName: pgName || pg.name, // Use provided name or fallback to user name
+            pgName: pgName, // Use EXACTLY what is provided
             pgContact,
             name: name || requesterName,
             address,
